@@ -8,6 +8,7 @@ const path = require('path');
 require('dotenv').config();
 
 const { initializeSocket } = require('./socket/socketHandler');
+const User = require('./models/User');
 
 // Route imports
 const authRoutes = require('./routes/auth');
@@ -29,7 +30,7 @@ const server = http.createServer(app);
 // Socket.io setup with CORS
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'https://schoolbuslive.netlify.app',
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -37,7 +38,7 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'https://schoolbuslive.netlify.app',
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
 }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
@@ -103,7 +104,53 @@ const connectDB = async () => {
 
 const PORT = process.env.PORT || 5000;
 
-connectDB().then(() => {
+const ensureAdminUser = async () => {
+  const adminName = process.env.ADMIN_NAME || 'Admin User';
+  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@school.com').toLowerCase().trim();
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+
+  let admin = await User.findOne({ role: 'admin' });
+  if (admin) {
+    console.log(`✅ Admin account exists (${admin.email})`);
+    return admin;
+  }
+
+  // If admin email already exists for non-admin user, upgrade role
+  let existing = await User.findOne({ email: adminEmail });
+  if (existing && existing.role !== 'admin') {
+    existing.role = 'admin';
+    existing.name = adminName;
+    existing.password = adminPassword;
+    existing = await existing.save();
+    console.log(`✅ Existing user converted to admin: ${adminEmail}`);
+    return existing;
+  }
+
+  if (!existing) {
+    admin = await User.create({
+      name: adminName,
+      email: adminEmail,
+      password: adminPassword,
+      role: 'admin',
+      phone: process.env.ADMIN_PHONE || '0000000000',
+    });
+
+    console.log('✅ Default admin created:', adminEmail);
+    console.log('   password:', adminPassword);
+    return admin;
+  }
+
+  console.log(`✅ Admin user available: ${existing.email}`);
+  return existing;
+};
+
+connectDB().then(async () => {
+  try {
+    await ensureAdminUser();
+  } catch (err) {
+    console.error('❌ Failed to ensure admin user:', err);
+  }
+
   server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
