@@ -88,22 +88,32 @@ const initializeSocket = (io) => {
     // ---- DRIVER: Real-time location update ----
     socket.on('location_update', async (data) => {
       if (!socket.user || socket.user.role !== 'driver') return;
-      const { busId, lat, lng, speed, heading, tripId } = data;
+      const { busId, lat, lng, speed, heading, tripId, status } = data;
+
+      // Decide bus status if driver doesn't send explicit status
+      const computedStatus = status
+        ? status
+        : speed >= 10
+          ? 'Running'
+          : speed > 0
+            ? 'Running'
+            : 'Stopped';
 
       try {
-        // Update bus location in DB
-        await Bus.findByIdAndUpdate(busId, {
+        // Update bus location and status in DB
+        const updatedBus = await Bus.findByIdAndUpdate(busId, {
           currentLocation: { type: 'Point', coordinates: [lng, lat] },
           currentSpeed: speed || 0,
           lastLocationUpdate: new Date(),
-        });
+          status: computedStatus,
+        }, { new: true });
 
         // Add to trip history if active
         if (tripId) {
           await Trip.findByIdAndUpdate(tripId, {
             $push: {
               locationHistory: {
-                $each: [{ coordinates: [lng, lat], speed, heading, timestamp: new Date() }],
+                $each: [{ coordinates: [lng, lat], speed, heading, status: computedStatus, timestamp: new Date() }],
                 $slice: -1000,
               },
             },
@@ -112,15 +122,30 @@ const initializeSocket = (io) => {
 
         const locationData = {
           busId,
-          lat, lng, speed, heading,
+          lat,
+          lng,
+          speed,
+          heading,
+          status: computedStatus,
           timestamp: new Date(),
           driverId: socket.user._id,
+          busNumber: updatedBus?.busNumber,
         };
 
-        // Broadcast to all in bus room
+        // Broadcast to all in bus room (drivers + listeners)
         socket.to(`bus_${busId}`).emit('location_update', locationData);
-        // Also to admin room
+        socket.emit('location_update', locationData); // echo back to driver if needed
+
+        // Global admin + monitoring feed
         io.to('admin_room').emit('bus_location_update', locationData);
+        io.emit('bus_status_update', {
+          busId,
+          status: computedStatus,
+          speed: speed || 0,
+          lastLocationUpdate: locationData.timestamp,
+          currentLocation: { lat, lng },
+          busNumber: updatedBus?.busNumber,
+        });
 
         // Speed violation check
         const bus = await Bus.findById(busId).select('speedLimit busNumber');
