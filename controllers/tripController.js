@@ -19,6 +19,33 @@ exports.startTrip = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Trip already active for this bus' });
     }
 
+    // Determine trip start location
+    let resolvedStartLocation = null;
+    if (startLocation && Array.isArray(startLocation.coordinates) && startLocation.coordinates.length === 2) {
+      resolvedStartLocation = {
+        coordinates: startLocation.coordinates,
+        address: startLocation.address || '',
+      };
+    }
+
+    const route = await require('../models/Route').findById(routeId || bus.route).select('startPoint stops');
+    if (!resolvedStartLocation && route) {
+      if (route.startPoint?.location?.coordinates?.length === 2) {
+        resolvedStartLocation = {
+          coordinates: route.startPoint.location.coordinates,
+          address: route.startPoint.name || '',
+        };
+      } else if (Array.isArray(route.stops) && route.stops.length > 0) {
+        const firstStop = [...route.stops].sort((a, b) => (a.order || 0) - (b.order || 0))[0];
+        if (firstStop?.location?.coordinates?.length === 2) {
+          resolvedStartLocation = {
+            coordinates: firstStop.location.coordinates,
+            address: firstStop.name || '',
+          };
+        }
+      }
+    }
+
     const trip = await Trip.create({
       bus: busId,
       driver: driver._id,
@@ -26,14 +53,21 @@ exports.startTrip = async (req, res) => {
       tripType: tripType || 'morning',
       status: 'active',
       startTime: new Date(),
-      startLocation,
+      startLocation: resolvedStartLocation,
     });
 
     // Update bus
-    await Bus.findByIdAndUpdate(busId, {
+    const busUpdate = {
       activeTrip: trip._id,
       status: 'Running',
-    });
+    };
+    if (resolvedStartLocation) {
+      busUpdate.currentLocation = { type: 'Point', coordinates: resolvedStartLocation.coordinates };
+      busUpdate.currentSpeed = 0;
+      busUpdate.lastLocationUpdate = new Date();
+    }
+
+    await Bus.findByIdAndUpdate(busId, busUpdate);
 
     // Broadcast trip start
     req.io.to(`bus_${busId}`).emit('trip_started', {
