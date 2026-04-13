@@ -49,6 +49,21 @@ const seed = async () => {
     color: '#10B981',
   });
 
+  const route3 = await Route.create({
+    name: 'Route C - Bhubaneswar to GIFT Campus',
+    startPoint: { name: 'Bhubaneswar', location: { type: 'Point', coordinates: [85.8245, 20.2961] } },
+    endPoint: { name: 'GIFT Campus', location: { type: 'Point', coordinates: [85.6740, 20.2234] } },
+    stops: [
+      { name: 'Bhubaneswar', location: { type: 'Point', coordinates: [85.8245, 20.2961] }, estimatedTime: '07:00 AM', order: 1 },
+      { name: 'Khandagiri', location: { type: 'Point', coordinates: [85.7891, 20.2598] }, estimatedTime: '07:20 AM', order: 2 },
+      { name: 'Tamando', location: { type: 'Point', coordinates: [85.7486, 20.2369] }, estimatedTime: '07:35 AM', order: 3 },
+      { name: 'GIFT Campus', location: { type: 'Point', coordinates: [85.6740, 20.2234] }, estimatedTime: '08:30 AM', order: 4 },
+    ],
+    totalDistance: 24, estimatedDuration: 90,
+    morningDeparture: '07:00 AM', eveningDeparture: '03:40 PM',
+    color: '#F59E0B',
+  });
+
   // Create drivers
   const driver1 = await User.create({
     name: 'Rajesh Kumar', email: 'driver1@school.com', password: 'driver123',
@@ -57,6 +72,10 @@ const seed = async () => {
   const driver2 = await User.create({
     name: 'Suresh Patel', email: 'driver2@school.com', password: 'driver123',
     role: 'driver', phone: '9876543212', licenseNumber: 'KA01-20190002',
+  });
+  const driver3 = await User.create({
+    name: 'Bibhu Prasad', email: 'driver3@school.com', password: 'driver123',
+    role: 'driver', phone: '9876543214', licenseNumber: 'OD02-20200003',
   });
 
   // Create buses
@@ -77,13 +96,15 @@ const seed = async () => {
   const bus3 = await Bus.create({
     busNumber: 'BUS-003', registrationNumber: 'KA01-CD-9012',
     capacity: 45, model: 'Eicher Skyline', year: 2022,
+    driver: driver3._id, route: route3._id,
     status: 'Delayed', speedLimit: 60,
-    currentLocation: { type: 'Point', coordinates: [77.6401, 12.9784] },
+    currentLocation: { type: 'Point', coordinates: [85.8245, 20.2961] },
   });
 
   // Assign buses to drivers
   await User.findByIdAndUpdate(driver1._id, { assignedBus: bus1._id });
   await User.findByIdAndUpdate(driver2._id, { assignedBus: bus2._id });
+  await User.findByIdAndUpdate(driver3._id, { assignedBus: bus3._id });
 
   // Create parent
   await User.create({
@@ -98,6 +119,7 @@ const seed = async () => {
   console.log('  Admin:  admin@school.com  / admin123');
   console.log('  Driver1: driver1@school.com / driver123');
   console.log('  Driver2: driver2@school.com / driver123');
+  console.log('  Driver3: driver3@school.com / driver123');
   console.log('  Parent: parent@school.com  / parent123');
 
   await mongoose.disconnect();

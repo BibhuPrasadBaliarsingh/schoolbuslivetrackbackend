@@ -1,5 +1,6 @@
 const Bus = require('../models/Bus');
 const User = require('../models/User');
+const Route = require('../models/Route');
 
 // @desc    Get all buses (public)
 // @route   GET /api/buses
@@ -10,8 +11,23 @@ exports.getBuses = async (req, res) => {
 
     if (status) filter.status = status;
     if (search) {
+      const [drivers, routes] = await Promise.all([
+        User.find({ role: 'driver', name: { $regex: search, $options: 'i' } }).select('_id'),
+        Route.find({
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { 'startPoint.name': { $regex: search, $options: 'i' } },
+            { 'endPoint.name': { $regex: search, $options: 'i' } },
+          ],
+        }).select('_id'),
+      ]);
+
       filter.$or = [
         { busNumber: { $regex: search, $options: 'i' } },
+        { registrationNumber: { $regex: search, $options: 'i' } },
+        { model: { $regex: search, $options: 'i' } },
+        { driver: { $in: drivers.map((driver) => driver._id) } },
+        { route: { $in: routes.map((route) => route._id) } },
       ];
     }
 

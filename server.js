@@ -95,9 +95,9 @@ initializeSocket(io);
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/schoolbus');
-    console.log('✅ MongoDB connected successfully');
+    console.log('âœ… MongoDB connected successfully');
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error.message);
+    console.error('âŒ MongoDB connection failed:', error.message);
     process.exit(1);
   }
 };
@@ -111,7 +111,7 @@ const ensureAdminUser = async () => {
 
   let admin = await User.findOne({ role: 'admin' });
   if (admin) {
-    console.log(`✅ Admin account exists (${admin.email})`);
+    console.log(`âœ… Admin account exists (${admin.email})`);
     return admin;
   }
 
@@ -122,7 +122,7 @@ const ensureAdminUser = async () => {
     existing.name = adminName;
     existing.password = adminPassword;
     existing = await existing.save();
-    console.log(`✅ Existing user converted to admin: ${adminEmail}`);
+    console.log(`âœ… Existing user converted to admin: ${adminEmail}`);
     return existing;
   }
 
@@ -135,12 +135,12 @@ const ensureAdminUser = async () => {
       phone: process.env.ADMIN_PHONE || '0000000000',
     });
 
-    console.log('✅ Default admin created:', adminEmail);
+    console.log('âœ… Default admin created:', adminEmail);
     console.log('   password:', adminPassword);
     return admin;
   }
 
-  console.log(`✅ Admin user available: ${existing.email}`);
+  console.log(`âœ… Admin user available: ${existing.email}`);
   return existing;
 };
 
@@ -148,12 +148,12 @@ connectDB().then(async () => {
   try {
     await ensureAdminUser();
   } catch (err) {
-    console.error('❌ Failed to ensure admin user:', err);
+    console.error('âŒ Failed to ensure admin user:', err);
   }
 
   server.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`ðŸš€ Server running on port ${PORT}`);
+    console.log(`ðŸŒ Environment: ${process.env.NODE_ENV || 'development'}`);
   });
 });
 
