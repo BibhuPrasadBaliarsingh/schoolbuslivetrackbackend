@@ -2,10 +2,18 @@ const express = require('express');
 const router = express.Router();
 const { Maintenance } = require('../models/index');
 const { protect, authorize } = require('../middleware/auth');
+const { createUploader } = require('../middleware/upload');
 
-router.post('/', protect, authorize('driver', 'admin'), async (req, res) => {
+const uploadMaintenanceImage = createUploader('maintenance');
+
+router.post('/', protect, authorize('driver', 'admin'), uploadMaintenanceImage.single('image'), async (req, res) => {
   try {
-    const record = await Maintenance.create({ ...req.body, requestedBy: req.user._id });
+    const record = await Maintenance.create({
+      ...req.body,
+      estimatedCost: req.body.estimatedCost ? Number(req.body.estimatedCost) : undefined,
+      requestedBy: req.user._id,
+      images: req.file ? [`/uploads/maintenance/${req.file.filename}`] : [],
+    });
     res.status(201).json({ success: true, maintenance: record });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });

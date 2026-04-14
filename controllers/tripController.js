@@ -18,6 +18,9 @@ exports.startTrip = async (req, res) => {
     if (bus.activeTrip) {
       return res.status(400).json({ success: false, message: 'Trip already active for this bus' });
     }
+    if (!routeId && !bus.route) {
+      return res.status(400).json({ success: false, message: 'No route assigned to this bus' });
+    }
 
     // Determine trip start location
     let resolvedStartLocation = null;

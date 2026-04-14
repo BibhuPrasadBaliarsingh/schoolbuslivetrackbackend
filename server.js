@@ -94,7 +94,7 @@ initializeSocket(io);
 // Connect to MongoDB
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/schoolbus');
+    await mongoose.connect(process.env.MONGODB_URI );
     console.log('âœ… MongoDB connected successfully');
   } catch (error) {
     console.error('âŒ MongoDB connection failed:', error.message);
