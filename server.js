@@ -30,7 +30,10 @@ const server = http.createServer(app);
 // Socket.io setup with CORS
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000'||"https://schoolbuslive.netlify.app",
+    origin: [
+      "http://localhost:3000",
+      "https://schoolbuslive.netlify.app"
+    ],
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -38,7 +41,10 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000'||"https://schoolbuslive.netlify.app",
+  origin: [
+    "http://localhost:3000",
+    "https://schoolbuslive.netlify.app"
+  ],
   credentials: true,
 }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
