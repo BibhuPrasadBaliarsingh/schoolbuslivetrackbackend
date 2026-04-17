@@ -14,7 +14,7 @@ const seed = async () => {
 
   // Create admin
   const admin = await User.create({
-    name: 'Admin User', email: 'admin@school.com', password: 'admin123',
+    name: 'Admin User', email: 'admin@busbee.com', password: 'admin123',
     role: 'admin', phone: '9876543210',
   });
 
@@ -66,15 +66,15 @@ const seed = async () => {
 
   // Create drivers
   const driver1 = await User.create({
-    name: 'Rajesh Kumar', email: 'driver1@school.com', password: 'driver123',
+    name: 'Rajesh Kumar', email: 'driver1@busbee.com', password: 'driver123',
     role: 'driver', phone: '9876543211', licenseNumber: 'KA01-20180001',
   });
   const driver2 = await User.create({
-    name: 'Suresh Patel', email: 'driver2@school.com', password: 'driver123',
+    name: 'Suresh Patel', email: 'driver2@busbee.com', password: 'driver123',
     role: 'driver', phone: '9876543212', licenseNumber: 'KA01-20190002',
   });
   const driver3 = await User.create({
-    name: 'Bibhu Prasad', email: 'driver3@school.com', password: 'driver123',
+    name: 'Bibhu Prasad', email: 'driver3@busbee.com', password: 'driver123',
     role: 'driver', phone: '9876543214', licenseNumber: 'OD02-20200003',
   });
 
@@ -108,7 +108,7 @@ const seed = async () => {
 
   // Create parent
   await User.create({
-    name: 'Parent User', email: 'parent@school.com', password: 'parent123',
+    name: 'Parent User', email: 'parent@busbee.com', password: 'parent123',
     role: 'parent', phone: '9876543213',
     childName: 'Rahul', childClass: '8th Grade',
     subscribedBus: bus1._id,
@@ -116,11 +116,11 @@ const seed = async () => {
 
   console.log('✅ Seed data created successfully!');
   console.log('\n📋 Login Credentials:');
-  console.log('  Admin:  admin@school.com  / admin123');
-  console.log('  Driver1: driver1@school.com / driver123');
-  console.log('  Driver2: driver2@school.com / driver123');
-  console.log('  Driver3: driver3@school.com / driver123');
-  console.log('  Parent: parent@school.com  / parent123');
+  console.log('  Admin:  admin@busbee.com  / admin123');
+  console.log('  Driver1: driver1@busbee.com / driver123');
+  console.log('  Driver2: driver2@busbee.com / driver123');
+  console.log('  Driver3: driver3@busbee.com / driver123');
+  console.log('  Parent: parent@busbee.com  / parent123');
 
   await mongoose.disconnect();
 };
