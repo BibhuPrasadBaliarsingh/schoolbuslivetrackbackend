@@ -32,7 +32,7 @@ const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:3000",
-      "https://schoolbuslive.netlify.app"
+      "https://busbee-live.netlify.app"
     ],
     methods: ['GET', 'POST'],
     credentials: true,
@@ -43,7 +43,7 @@ const io = new Server(server, {
 app.use(cors({
   origin: [
     "http://localhost:3000",
-    "https://schoolbuslive.netlify.app"
+    "https://busbee-live.netlify.app"
   ],
   credentials: true,
 }));
