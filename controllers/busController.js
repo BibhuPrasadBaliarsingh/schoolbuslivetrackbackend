@@ -198,3 +198,84 @@ exports.clearEmergency = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Set driver online status (driver logs in)
+// @route   POST /api/buses/:id/driver-online
+exports.setDriverOnline = async (req, res) => {
+  try {
+    const bus = await Bus.findById(req.params.id);
+    if (!bus) return res.status(404).json({ success: false, message: 'Bus not found' });
+
+    bus.status = 'Running';
+    bus.lastLocationUpdate = new Date();
+    await bus.save();
+
+    // Emit to admins that driver is online
+    req.io.emit('driver_online', {
+      busId: bus._id,
+      busNumber: bus.busNumber,
+      driver: bus.driver,
+      timestamp: new Date(),
+    });
+
+    res.json({ success: true, message: 'Driver is now online', bus });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Set driver offline status (driver logs out)
+// @route   POST /api/buses/:id/driver-offline
+exports.setDriverOffline = async (req, res) => {
+  try {
+    const bus = await Bus.findById(req.params.id);
+    if (!bus) return res.status(404).json({ success: false, message: 'Bus not found' });
+
+    bus.status = 'Stopped';
+    await bus.save();
+
+    // Emit to admins that driver is offline
+    req.io.emit('driver_offline', {
+      busId: bus._id,
+      busNumber: bus.busNumber,
+      driver: bus.driver,
+      timestamp: new Date(),
+    });
+
+    res.json({ success: true, message: 'Driver is now offline', bus });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Update driver location (continuous tracking)
+// @route   POST /api/buses/:id/update-location
+exports.updateDriverLocation = async (req, res) => {
+  try {
+    const { lat, lng, speed, heading } = req.body;
+    const bus = await Bus.findById(req.params.id);
+    if (!bus) return res.status(404).json({ success: false, message: 'Bus not found' });
+
+    bus.currentLocation = {
+      type: 'Point',
+      coordinates: [lng, lat],
+    };
+    bus.currentSpeed = speed || 0;
+    bus.lastLocationUpdate = new Date();
+    await bus.save();
+
+    // Emit location update to admins
+    req.io.emit('bus_location_update', {
+      busId: bus._id,
+      busNumber: bus.busNumber,
+      location: bus.currentLocation,
+      speed: bus.currentSpeed,
+      heading,
+      timestamp: bus.lastLocationUpdate,
+    });
+
+    res.json({ success: true, bus });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
