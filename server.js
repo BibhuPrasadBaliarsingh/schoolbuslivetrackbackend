@@ -9,6 +9,7 @@ const fs = require('fs').promises;
 require('dotenv').config();
 
 const { initializeSocket } = require('./socket/socketHandler');
+const { startKeepAlive } = require('./utils/keepAlive');
 const User = require('./models/User');
 const Route = require('./models/Route');
 
@@ -162,6 +163,7 @@ connectDB().then(async () => {
   server.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);
     console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+    startKeepAlive();
   });
 });
 
