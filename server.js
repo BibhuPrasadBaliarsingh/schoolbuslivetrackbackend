@@ -5,10 +5,12 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
+const fs = require('fs').promises;
 require('dotenv').config();
 
 const { initializeSocket } = require('./socket/socketHandler');
 const User = require('./models/User');
+const Route = require('./models/Route');
 
 // Route imports
 const authRoutes = require('./routes/auth');
@@ -28,31 +30,31 @@ const app = express();
 const server = http.createServer(app);
 
 // Socket.io setup with CORS
+const checkCorsOrigin = (origin, callback) => {
+  // Allow all localhost, 127.0.0.1, LAN IPs, Netlify, and server-to-server (no origin)
+  callback(null, true);
+};
+
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:3000",
-      "https://busbee-live.netlify.app"
-    ],
-    methods: ['GET', 'POST'],
+    origin: checkCorsOrigin,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
   },
 });
 
 // Middleware
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://busbee-live.netlify.app"
-  ],
+  origin: checkCorsOrigin,
   credentials: true,
 }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static files for uploads
+// Static files for uploads and route map data
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/data', express.static(path.join(__dirname, 'data')));
 
 // Make io accessible in routes
 app.use((req, res, next) => {
@@ -101,9 +103,9 @@ initializeSocket(io);
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI );
-    console.log('âœ… MongoDB connected successfully');
+    console.log('✅ MongoDB connected successfully');
   } catch (error) {
-    console.error('âŒ MongoDB connection failed:', error.message);
+    console.error('❌ MongoDB connection failed:', error.message);
     process.exit(1);
   }
 };
@@ -117,7 +119,7 @@ const ensureAdminUser = async () => {
 
   let admin = await User.findOne({ role: 'admin' });
   if (admin) {
-    console.log(`âœ… Admin account exists (${admin.email})`);
+    console.log(`✅ Admin account exists (${admin.email})`);
     return admin;
   }
 
@@ -128,7 +130,7 @@ const ensureAdminUser = async () => {
     existing.name = adminName;
     existing.password = adminPassword;
     existing = await existing.save();
-    console.log(`âœ… Existing user converted to admin: ${adminEmail}`);
+    console.log(`✅ Existing user converted to admin: ${adminEmail}`);
     return existing;
   }
 
@@ -141,12 +143,12 @@ const ensureAdminUser = async () => {
       phone: process.env.ADMIN_PHONE || '0000000000',
     });
 
-    console.log('âœ… Default admin created:', adminEmail);
+    console.log('✅ Default admin created:', adminEmail);
     console.log('   password:', adminPassword);
     return admin;
   }
 
-  console.log(`âœ… Admin user available: ${existing.email}`);
+  console.log(`✅ Admin user available: ${existing.email}`);
   return existing;
 };
 
@@ -154,12 +156,12 @@ connectDB().then(async () => {
   try {
     await ensureAdminUser();
   } catch (err) {
-    console.error('âŒ Failed to ensure admin user:', err);
+    console.error('❌ Failed during startup initialization:', err);
   }
 
   server.listen(PORT, () => {
-    console.log(`ðŸš€ Server running on port ${PORT}`);
-    console.log(`ðŸŒ Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
   });
 });
 

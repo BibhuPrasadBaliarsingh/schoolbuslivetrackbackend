@@ -9,12 +9,19 @@ const stopSchema = new mongoose.Schema({
   estimatedTime: String, // e.g., "07:30 AM"
   order: { type: Number, required: true },
   radius: { type: Number, default: 100 }, // geofence radius in meters
+  stopsHere: { type: Boolean, default: true },
+  isActive: { type: Boolean, default: true },
+  stopId: { type: String },
 });
 
 const routeSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Route name is required'],
+    trim: true,
+  },
+  routeCode: {
+    type: String,
     trim: true,
   },
   startPoint: {
@@ -41,9 +48,18 @@ const routeSchema = new mongoose.Schema({
     default: true,
   },
   polyline: String, // encoded polyline for map rendering
+  pathCoordinates: {
+    type: [[Number]],
+    default: [],
+  },
   color: {
     type: String,
     default: '#3B82F6',
+  },
+  bus: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Bus',
+    default: null,
   },
 }, {
   timestamps: true,

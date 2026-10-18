@@ -3,7 +3,7 @@ const https = require('https');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/auth');
 
-const SCCOCT_URL = process.env.SCCOCT_URL || 'https://api.sccoct.io';
+const SCCOCT_URL = process.env.SCCOCT_URL;
 
 const callSccoct = async (lat, lng) => {
   if (typeof global.fetch === 'function') {
@@ -62,21 +62,11 @@ router.post('/transform', async (req, res) => {
   }
 
   try {
-    const response = await fetch(`${SCCOCT_URL}/transform`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lat, lng }),
-    });
-
-    if (!response.ok) {
-      return res.status(response.status).json({ success: false, message: 'SCCOCT transform failed' });
-    }
-
     const data = await callSccoct(lat, lng);
     return res.json({ success: true, lat: data.lat ?? lat, lng: data.lng ?? lng });
   } catch (err) {
-    console.error('SCCOCT transform proxy failed', err);
-    return res.status(500).json({ success: false, message: 'SCCOCT transform proxy error', error: err.message });
+    console.warn('SCCOCT transform proxy unavailable, returning raw coordinates:', err.message);
+    return res.json({ success: true, lat, lng, note: 'Transform service unavailable, returned raw coordinates' });
   }
 });
 
